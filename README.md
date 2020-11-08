@@ -14,5 +14,5 @@
     To maximize profit strategy uses trailing stop, which is following the price as long as it rises, 
     and closing positions after price drop. You can see strategy in operation on chart below. 
     
-    ![cojest](Trading-Bot/chart1.jpg)
+    ![cojest](chart1.jpg)
     
