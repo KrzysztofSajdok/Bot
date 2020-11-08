@@ -1,6 +1,6 @@
 int range = 5; //number of candles to analyze
 double TP = 0.75;       
-double SLK = 0.50;   // stop loss na kapitale
+double SLK = 0.50;   
 double FirstStep = 200.00; // First entry
 double LastStep = 450.00;  // last entry
 int Slip = 5; // slippage
@@ -10,7 +10,7 @@ bool MM = True;
 bool Euforia = False; 
 bool Panic = False;
 bool Agree = True;
-int a = 0;  //indeks do zbioru interwałów i cen otwarcia
+int a = 0; 
 double OpenPrice[];
 double highest;
 double lowest;
