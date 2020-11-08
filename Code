@@ -154,7 +154,7 @@ void OnTick()
                      if (OrderType() == OP_BUY) CloseError = OrderClose(OrderTicket(),OrderLots(),Bid,Slip,clrNONE);  
                }      
 
-            ArrayFree(OpenPrice);//reset ustawień początkowych
+            ArrayFree(OpenPrice);
             ArrayFree(intervals);
             MM = True;
             Euforia = False; 
@@ -169,7 +169,7 @@ void OnTick()
          }
     if (Panic && OrdersTotal() == 0)
       {
-      ArrayFree(OpenPrice);//reset ustawień początkowych
+      ArrayFree(OpenPrice);
       ArrayFree(intervals);
       MM = True;
       Euforia = False; 
@@ -183,7 +183,7 @@ void OnTick()
       
     if (Euforia && OrdersTotal() == 0)
       {
-      ArrayFree(OpenPrice);//reset ustawień początkowych
+      ArrayFree(OpenPrice);
       ArrayFree(intervals);
       MM = True;
       Euforia = False; 
