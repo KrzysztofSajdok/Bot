@@ -1,26 +1,26 @@
-int range = 5; //ile świeczek w tył sprawdzać
+int range = 5; //number of candles to analyze
 double TP = 0.75;       
 double SLK = 0.50;   // stop loss na kapitale
-double FirstStep = 200.00; // pierwsze wejście(początek euforii/paniki)
-double LastStep = 450.00;  // ostatnie wejście(najgłębsza zakładana euforia/panika)
+double FirstStep = 200.00; // First entry
+double LastStep = 450.00;  // last entry
 int Slip = 5; // slippage
 int StopLossLeap = 0;
 double oldStopLoss;
 bool MM = True;
 bool Euforia = False; 
-bool Panika = False;
-bool Zgoda = True;
+bool Panic = False;
+bool Agree = True;
 int a = 0;  //indeks do zbioru interwałów i cen otwarcia
 double OpenPrice[];
 double highest;
 double lowest;
 datetime LastTradeCloseTime;
-bool Zgoda3 = True;
+bool Agree3 = True;
 
 
 void SetStopLoss(double price)
    {
-   for(int k=1; k<=OrdersTotal(); k++) //modyfikacja StopLoss dla każdego zlecenia 
+   for(int k=1; k<=OrdersTotal(); k++) //StopLoss modification for each order
       {
       if (OrderSelect(k-1,SELECT_BY_POS)== True) bool ModifyError = OrderModify(OrderTicket(),OrderOpenPrice(),price,0,0,clrNONE);
       if (ModifyError == True) Print("Order modified successfully."); 
@@ -32,21 +32,21 @@ void OnTick()
       
       
       
-      double high = High[ArrayMaximum(High,range,0)]; //punkt od którego liczone jest wybicie
+      double high = High[ArrayMaximum(High,range,0)]; 
       double low = Low[ArrayMinimum(Low,range,0)];
       ArrayResize(OpenPrice, a + 1);
         
             
-      if (MM)  // wyliczenia dotyczące wielkości zleceń i ich częstotliwości
+      if (MM)  // position size management
          {
             static int OrdersNumber = 10;     
             double a1 = (LastStep-FirstStep);
             double a2 = (LastStep-FirstStep)*0.05;
-            static double SumaInterwalow;
-            for (static double r = 1.00; SumaInterwalow<=a1; r += 0.05){//
-               SumaInterwalow = 0;
+            static double IntervalsSum;
+            for (static double r = 1.00; IntervalsSum<=a1; r += 0.05){//
+               IntervalsSum = 0;
                for(int c=0; c<=OrdersNumber-1; c++){
-               SumaInterwalow += a2 + r*c;
+               IntervalsSum += a2 + r*c;
                }
             }
             static double intervals[];
@@ -57,13 +57,13 @@ void OnTick()
                intervals[i] = intervals[i-1] - r;
                i = i+1;
                } 
-            double Strata;
+            double Loss;
             static double lot = 0.01;
-            while (Strata < AccountBalance()*SLK){
-               Strata = 0;
+            while (Loss < AccountBalance()*SLK){
+               Loss = 0;
                double ProfitOnPoint = 1;
                for (int b=0; b<=OrdersNumber-1;b++){
-                  Strata += intervals[b]*(b+1)*lot*ProfitOnPoint;
+                  Loss += intervals[b]*(b+1)*lot*ProfitOnPoint;
                   }
                lot += 0.01;
                } 
@@ -72,26 +72,26 @@ void OnTick()
          }
     
            
-      if (Bid - low >= FirstStep && Zgoda == True && TimeLocal() - LastTradeCloseTime > range*3600 )//wykrycie euforii, pierwsze zlecenie
+      if (Bid - low >= FirstStep && Agree == True && TimeLocal() - LastTradeCloseTime > range*3600 )
          {  
             int ticket = OrderSend(Symbol(), OP_SELL, 2, Bid, Slip, 0,0,NULL,123,0,clrNONE);           
             if (ticket <0) Print("OrderSend failed with error #",GetLastError());
             if (OrderSelect(a, SELECT_BY_POS) == True) OpenPrice[a] = OrderOpenPrice();  
             a = a + 1;
             Euforia = True;
-            Zgoda = False;
+            Agree = False;
             MM = False;
             lowest = low;    
          }
         
-      if (high - Ask >= FirstStep && Zgoda == True && TimeLocal() - LastTradeCloseTime > range*3600)//wykrycie paniki, pierwsze zlecenie
+      if (high - Ask >= FirstStep && Zgoda == True && TimeLocal() - LastTradeCloseTime > range*3600)
          {
             int ticket = OrderSend(Symbol(), OP_BUY, lot, Ask, Slip, 0,0,NULL,123,0,clrNONE);           
             if (ticket <0) Print("OrderSend failed with error #",GetLastError());
             if (OrderSelect(a, SELECT_BY_POS) == True) OpenPrice[a] = OrderOpenPrice();
             a = a + 1;           
-            Panika = True;
-            Zgoda = False;
+            Panic = True;
+            Agree = False;
             MM = False;
             highest = high;
             lowest = Ask;
@@ -99,7 +99,7 @@ void OnTick()
          }
 
       
-      if (Euforia && a < OrdersNumber)//kolejne zlecenia Sell
+      if (Euforia && a < OrdersNumber)
          {
             if (Bid - OpenPrice[a-1] > intervals[a-1] )
                {
@@ -108,10 +108,10 @@ void OnTick()
                   if (OrderSelect(a, SELECT_BY_POS) == True) OpenPrice[a] = OrderOpenPrice();
                   a = a+1;
                } 
-            if (Bid > highest) highest = Bid; // highest - szczyt euforii   
+            if (Bid > highest) highest = Bid;
          }
       
-      if (Panika && a < OrdersNumber)//kolejne zlecenia Buy
+      if (Panic && a < OrdersNumber)
          {
             if (OpenPrice[a-1] - Ask > intervals[a-1])
                {
@@ -120,12 +120,12 @@ void OnTick()
                   if (OrderSelect(a, SELECT_BY_POS) == True) OpenPrice[a] = OrderOpenPrice();
                   a = a+1;
                } 
-            if (Ask < lowest) lowest = Ask;   // lowest - szczyt paniki  
+            if (Ask < lowest) lowest = Ask; 
          }
    
-      double dif = highest - lowest;//wyliczenia dotyczące dynamicznego TakeProfit
+      double dif = highest - lowest;//dynamic TakeProfit
       
-      if (Euforia) // ruchome TP dla Euforii
+      if (Euforia)
          {
          double BE = highest - TP*dif -10*StopLossLeap;
          if (Bid<BE)
@@ -135,7 +135,7 @@ void OnTick()
             }
          }
          
-      if (Panika)
+      if (Panic)
          {
          BE = lowest + TP*dif +20*StopLossLeap;
          if (Ask>BE)
@@ -145,7 +145,7 @@ void OnTick()
             }
          }
 
-      if (NormalizeDouble(AccountEquity(),2) < AccountBalance()*SLK) // osiągnięto poziom SLK, zamknięcie wszystkich zleceń
+      if (NormalizeDouble(AccountEquity(),2) < AccountBalance()*SLK)
          { 
             for(int k = OrdersTotal()-1;k>=0; k--)
                {   
@@ -158,8 +158,8 @@ void OnTick()
             ArrayFree(intervals);
             MM = True;
             Euforia = False; 
-            Panika = False;
-            Zgoda = True;
+            Panic = False;
+            Agree = True;
             a = 0;
             StopLossLeap = 0;
             LastTradeCloseTime = TimeLocal();
@@ -167,14 +167,14 @@ void OnTick()
             
             //TakeProfit = 0;
          }
-    if (Panika && OrdersTotal() == 0)
+    if (Panic && OrdersTotal() == 0)
       {
       ArrayFree(OpenPrice);//reset ustawień początkowych
       ArrayFree(intervals);
       MM = True;
       Euforia = False; 
-      Panika = False;
-      Zgoda = True;
+      Panic = False;
+      Agree = True;
       a = 0;
       StopLossLeap = 0;
       LastTradeCloseTime = TimeLocal();
@@ -187,8 +187,8 @@ void OnTick()
       ArrayFree(intervals);
       MM = True;
       Euforia = False; 
-      Panika = False;
-      Zgoda = True;
+      Panic = False;
+      Agree = True;
       a = 0;
       StopLossLeap = 0;
       LastTradeCloseTime = TimeLocal();
