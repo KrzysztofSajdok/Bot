@@ -15,5 +15,4 @@
     and closing positions after price drop. You can see strategy in operation on chart below. 
     
     
-    ![ss](https://user-images.githubusercontent.com/66065506/98485818-5cb7ac80-2219-11eb-98a9-fc7230b26ed0.jpg)
     
