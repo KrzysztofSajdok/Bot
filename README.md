@@ -1,4 +1,4 @@
-# Trading-Bot
+# Trading Bot
   #### 1. Subject of project
   &nbsp;&nbsp;&nbsp;&nbsp; Trading bot detects "panic" and places orders according to calculated position size and frequency.
   Orders are being placed mostly on DAX, which is german blue chip stock market index. 
